@@ -1,0 +1,7 @@
+# Không copy vendor/node_modules từ host — tránh vendor thiếu file (lỗi autoload symfony/string, …)
+/vendor
+/node_modules
+/.git
+/.github
+.env
+.gitignore

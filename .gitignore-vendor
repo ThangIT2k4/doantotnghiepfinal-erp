@@ -1,0 +1,34 @@
+# Backup .gitignore before adding vendor
+# Rename this to .gitignore if you want to include vendor folder
+
+# Laravel
+/vendor/
+/node_modules/
+/public/hot
+/public/storage/*.key
+/storage/*.key
+/bootstrap/cache/*.php
+
+# Environment
+.env
+.env.backup
+.phpunit.result.cache
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+/storage/logs/*.log
+
+# Cache
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*

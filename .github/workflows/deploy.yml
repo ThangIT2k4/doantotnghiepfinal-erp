@@ -1,0 +1,173 @@
+name: Deploy Production
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Set lowercase repo
+        run: echo "REPO_LC=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
+      - name: Build & Push Image
+        run: |
+          set -e
+          
+          # Build image — capture output để debug nếu lỗi composer
+          echo "🔨 Building image..."
+          if ! docker build --no-cache \
+            --progress=plain \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            -t ghcr.io/${REPO_LC}-app:${{ github.sha }} \
+            -t ghcr.io/${REPO_LC}-app:latest \
+            -f docker/prod/Dockerfile . 2>&1 | tee build.log; then
+            echo "❌ Build FAILED. Last 50 lines of build log:"
+            tail -50 build.log
+            exit 1
+          fi
+          
+          echo "✓ Build successful"
+          
+          # Verify image có vendor
+          echo "📦 Verifying vendor in image..."
+          if ! docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
+            test -f /opt/app/vendor/composer/autoload_real.php; then
+            echo "❌ Vendor verification FAILED"
+            echo "Checking what's in /opt/app/vendor/composer/:"
+            docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
+              ls -la /opt/app/vendor/composer/ || true
+            exit 1
+          fi
+          echo "✓ Vendor verified in image"
+          
+          # Push image
+          echo "📤 Pushing image..."
+          docker push ghcr.io/${REPO_LC}-app:${{ github.sha }}
+          docker push ghcr.io/${REPO_LC}-app:latest
+          echo "✓ Push successful"
+
+      - name: Upload files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "docker-compose.server.yml,docker/nginx/default.conf"
+          target: "/opt/erp"
+          overwrite: true
+
+      - name: Debug server files
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            echo "CURRENT DIR:"
+            pwd
+            echo "FILES:"
+            ls -la
+            cd /opt/erp || exit 1
+            echo "AFTER CD:"
+            pwd
+            ls -la
+            ls -la /opt/erp/docker || true
+            ls -la /opt/erp/docker/nginx || true
+
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: REPO_LC
+          script: |
+            set -e
+            
+            cd /opt/erp || exit 1
+            
+            APP_IMAGE="ghcr.io/${REPO_LC}-app:${{ github.sha }}"
+            sed -i "/APP_IMAGE/d" .env || true
+            echo "APP_IMAGE=${APP_IMAGE}" >> .env
+
+            # Ensure production settings are correct
+            sed -i "s|^APP_URL=.*|APP_URL=https://zororms.software|" .env || true
+            sed -i "s|^APP_ENV=.*|APP_ENV=production|" .env || true
+            sed -i "s|^APP_DEBUG=.*|APP_DEBUG=false|" .env || true
+            grep -q "^SESSION_DRIVER=" .env || echo "SESSION_DRIVER=redis" >> .env
+            grep -q "^MAIL_SCHEME=" .env || echo "MAIL_SCHEME=tls" >> .env
+            grep -q "^MAIL_ENCRYPTION=" .env || echo "MAIL_ENCRYPTION=tls" >> .env
+            sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://zororms.software/auth/google/callback|" .env || true
+
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            echo "📥 Pulling image..."
+            docker compose -f docker-compose.server.yml pull
+
+            echo "🚀 Starting containers..."
+            docker compose -f docker-compose.server.yml up -d --force-recreate --remove-orphans
+
+            echo "⏳ Waiting for app container to be ready..."
+            WAIT_SECONDS=0
+            MAX_WAIT=120
+            while [ $WAIT_SECONDS -lt $MAX_WAIT ]; do
+              if docker compose -f docker-compose.server.yml exec -T app test -f /var/www/html/vendor/composer/autoload_real.php 2>/dev/null; then
+                echo "✓ Vendor verified in container"
+                break
+              fi
+              
+              WAIT_SECONDS=$((WAIT_SECONDS + 5))
+              if [ $WAIT_SECONDS -lt $MAX_WAIT ]; then
+                echo "  waiting... ($WAIT_SECONDS/${MAX_WAIT}s)"
+                sleep 5
+              fi
+            done
+
+            if [ $WAIT_SECONDS -ge $MAX_WAIT ]; then
+              echo "❌ Timeout: vendor not ready after ${MAX_WAIT}s"
+              echo "📋 Checking container logs:"
+              docker compose -f docker-compose.server.yml logs app --tail 100
+              echo ""
+              echo "📋 Checking vendor in image:"
+              docker run --rm $APP_IMAGE ls -la /opt/app/vendor/composer/ || echo "vendor missing in image!"
+              exit 1
+            fi
+
+            echo "⏳ Waiting for MySQL to be ready..."
+            RETRIES=30
+            until docker compose -f docker-compose.server.yml exec -T db mysqladmin ping -h "localhost" -uroot -proot123 --silent 2>/dev/null; do
+              RETRIES=$((RETRIES - 1))
+              if [ "$RETRIES" -le 0 ]; then
+                echo "❌ MySQL timeout. Logs:"
+                docker compose -f docker-compose.server.yml logs db --tail 50
+                exit 1
+              fi
+              echo "  MySQL not ready, retry in 3s... ($RETRIES left)"
+              sleep 3
+            done
+            echo "✓ MySQL ready"
+
+            echo "🔄 Running migrations..."
+            docker compose -f docker-compose.server.yml exec -w /var/www/html -T app php artisan migrate --force
+
+            echo "⚙️  Caching config..."
+            docker compose -f docker-compose.server.yml exec -w /var/www/html -T app php artisan config:cache
+
+            echo "🧪 Testing app..."
+            curl -s http://localhost > /dev/null && echo "✓ App responding" || echo "⚠ App not responding yet"
+
+            echo ""
+            echo "✅ Deploy COMPLETE 🚀"

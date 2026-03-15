@@ -1,0 +1,80 @@
+*.log
+.DS_Store
+.env
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+Homestead.json
+Homestead.yaml
+Thumbs.db
+
+# Development & Test Files
+/test-*.php
+/app/Http/Controllers/Test*.php
+/app/Console/Commands/Test*.php
+/public/test*.html
+/public/debug.html
+/public/test-style.css
+
+# Backup & Old Files
+/backup
+/database/migrations_1
+/database/sql/*.sql
+/hanoi_*.sql
+/database/database.sqlite
+
+# Helper Scripts (optional - uncomment if want to ignore)
+# /artisan-key-generator.php
+# /clear-cache.php
+# /create-storage-link.php
+# /backup_database.php
+# /clear_database.php
+# /check_circular_references.php
+# /build_hanoi_geo_sql.php
+# /import_hanoi_2cap.php
+# /composer-installer.php
+# /setup.ps1
+# /setup.sh
+# /update-manager-to-staff.ps1
+
+# Flutter App (if not used)
+# /flutter_tenant_app
+
+# Deployment
+/deploy
+
+# Storage compiled files (should not be tracked)
+/storage/framework/views/*
+!/storage/framework/views/.gitkeep
+
+# Large files
+*.zip
+*.pdf
+
+# Storage logs
+/storage/logs/*.log
+
+# Documentation files (ignore all .md except user-guides)
+*.md
+!docs/
+!docs/user-guides/
+!docs/user-guides/**
+/docs/presentation-erp-flow/
+app/API_KEYS/key.json
+app/API_KEYS/root@178.128.100.212
+scripts/test*

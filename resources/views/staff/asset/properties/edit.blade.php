@@ -1,0 +1,984 @@
+﻿@extends('layouts.staff_dashboard')
+
+@section('title', 'Sửa Bất động sản')
+@section('content')
+<main class="main-content">
+    <div class="container-fluid">
+        {{-- Page Header --}}
+        @include('staff.components.index-page-header', [
+            'title' => 'Sửa Bất động sản',
+            'subtitle' => 'Cập nhật thông tin BĐS #' . $property->id,
+            'icon' => 'fas fa-building',
+            'actions' => [
+                [
+                    'variant' => 'secondary',
+                    'label' => 'Quay lại',
+                    'icon' => 'fas fa-arrow-left',
+                    'url' => route('staff.properties.index')
+                ]
+            ]
+        ])
+
+        @if($property->status == 1)
+        <div class="alert alert-warning mb-3">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Lưu ý:</strong> Bất động sản đang ở trạng thái hoạt động. Bạn cần chuyển về trạng thái nháp (Tạm ngưng) trước khi có thể chỉnh sửa thông tin.
+        </div>
+        @endif
+
+        {{-- Form với Layout Full Width --}}
+        <form id="propertyForm" method="POST" action="{{ route('staff.properties.update', $property->id) }}" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
+            
+            {{-- Card 1: Thông tin cơ bản --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Thông tin cơ bản
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tên BĐS <span class="text-danger">*</span></label>
+                                <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $property->name) }}" required {{ $property->status == 1 ? 'disabled' : '' }}>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Loại BĐS</label>
+                                <select name="property_type_id" class="form-select @error('property_type_id') is-invalid @enderror" {{ $property->status == 1 ? 'disabled' : '' }}>
+                                    <option value="">-- Chọn loại --</option>
+                                    @foreach ($propertyTypes as $type)
+                                    <option value="{{ $type->id }}" {{ old('property_type_id', $property->property_type_id) == $type->id ? 'selected' : '' }}>
+                                        {{ $type->name_local ?? $type->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('property_type_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Số tầng</label>
+                                <input type="number" name="total_floors" class="form-control @error('total_floors') is-invalid @enderror" value="{{ old('total_floors', $property->total_floors) }}" min="1" {{ $property->status == 1 ? 'disabled' : '' }}>
+                                @error('total_floors')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Trạng thái</label>
+                                <select name="status" id="statusSelect" class="form-select @error('status') is-invalid @enderror">
+                                    <option value="1" {{ old('status', $property->status) == 1 ? 'selected' : '' }}>Hoạt động</option>
+                                    <option value="0" {{ old('status', $property->status) == 0 ? 'selected' : '' }}>Tạm ngưng</option>
+                                </select>
+                                @error('status')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Mô tả</label>
+                        <textarea name="description" class="form-control @error('description') is-invalid @enderror" rows="3" {{ $property->status == 1 ? 'disabled' : '' }}>{{ old('description', $property->description) }}</textarea>
+                        @error('description')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 2: Hình ảnh --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-images me-2"></i>Hình ảnh
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @php
+                        // Sử dụng documents đã được eager load từ controller
+                        $propertyImages = $property->documents ? $property->documents->filter(function($doc) {
+                            return $doc->document_type === 'image';
+                        }) : collect();
+                    @endphp
+                    
+                    @if($propertyImages && $propertyImages->count() > 0)
+                        <div class="mb-3">
+                            <label class="form-label">Hình ảnh hiện tại</label>
+                            <div class="row g-2 mb-3" id="existing-images">
+                                @foreach($propertyImages as $document)
+                                    @php
+                                        // Lấy file_url từ document (đã là relative path không có storage/ prefix)
+                                        $filePath = $document->getRawOriginal('file_url') ?? $document->file_url;
+                                        
+                                        // Nếu đã là full URL, sử dụng trực tiếp
+                                        if (str_starts_with($filePath, 'http://') || str_starts_with($filePath, 'https://')) {
+                                            $imageUrl = $filePath;
+                                        } else {
+                                            // Path đã không có storage/ prefix, chỉ cần thêm vào URL
+                                            $imageUrl = asset('storage/' . ltrim($filePath, '/'));
+                                        }
+                                    @endphp
+                                    <div class="col-md-3 mb-2 image-item" data-document-id="{{ $document->id }}" data-marked-for-delete="false">
+                                        <div class="position-relative">
+                                            <img src="{{ $imageUrl }}" alt="Property Image" class="img-thumbnail" style="width: 100%; height: 150px; object-fit: cover;">
+                                            @if($property->status != 1)
+                                            <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0" onclick="markImageForDeletion(this, {{ $document->id }})">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($property->status != 1)
+                    <div class="mb-3">
+                        <label class="form-label">{{ $propertyImages && $propertyImages->count() > 0 ? 'Thêm hình ảnh mới' : 'Hình ảnh' }}</label>
+                        <div class="image-upload-area" id="imageUploadArea" style="border: 2px dashed #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;" ondrop="handleDrop(event, 'images')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="mb-2">Kéo thả ảnh vào đây hoặc click để chọn</p>
+                            <input type="file" 
+                                   name="images[]" 
+                                   id="images" 
+                                   class="form-control" 
+                                   accept="image/*" 
+                                   multiple
+                                   style="display: none;">
+                            <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('images').click()">
+                                <i class="fas fa-folder-open me-2"></i>Chọn ảnh
+                            </button>
+                        </div>
+                        <div class="form-text">Chọn nhiều hình ảnh cùng lúc bằng cách giữ Ctrl (Windows) hoặc Cmd (Mac) và click chọn nhiều file. Định dạng: JPEG, PNG, JPG, GIF, WebP. Tối đa 5MB mỗi file.</div>
+                    </div>
+                    @else
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Không thể thêm ảnh khi bất động sản đang hoạt động.
+                    </div>
+                    @endif
+                    
+                    <!-- Image Preview -->
+                    <div id="image-preview" class="row g-2 mt-3"></div>
+                </div>
+            </div>
+
+            {{-- Card 3: Nhân viên phụ trách --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Nhân viên phụ trách
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quản lý (Manager)</label>
+                                <select name="assigned_manager_id" id="assigned_manager_id" class="form-select @error('assigned_manager_id') is-invalid @enderror" {{ $property->status == 1 ? 'disabled' : '' }}>
+                                    <option value="">-- Chọn quản lý --</option>
+                                    @if($managers && $managers->count() > 0)
+                                        @foreach($managers as $manager)
+                                            <option value="{{ $manager->id }}" {{ old('assigned_manager_id', $assignedManagerId) == $manager->id ? 'selected' : '' }}>
+                                                {{ $manager->userProfile->full_name ?? $manager->full_name ?? 'N/A' }}
+                                            </option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="form-text">Chọn quản lý phụ trách bất động sản này</div>
+                                @if($property->status == 1)
+                                    <div class="form-text text-warning">
+                                        <i class="fas fa-info-circle"></i>
+                                        Không thể thay đổi quản lý khi bất động sản đang hoạt động.
+                                    </div>
+                                @endif
+                                @error('assigned_manager_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nhân viên (Agent)</label>
+                                <select name="assigned_agent_ids[]" id="assigned_agent_ids" class="form-select @error('assigned_agent_ids') is-invalid @enderror" multiple {{ $property->status == 1 ? 'disabled' : '' }}>
+                                    @if($agents && $agents->count() > 0)
+                                        @foreach($agents as $agent)
+                                            <option value="{{ $agent->id }}" {{ $assignedAgentIds->contains($agent->id) ? 'selected' : '' }}>
+                                                {{ $agent->userProfile->full_name ?? $agent->full_name ?? 'N/A' }}
+                                            </option>
+                                        @endforeach
+                                    @endif
+                                </select>
+                                <div class="form-text">Chọn một hoặc nhiều nhân viên phụ trách (giữ Ctrl để chọn nhiều)</div>
+                                @if($property->status == 1)
+                                    <div class="form-text text-warning">
+                                        <i class="fas fa-info-circle"></i>
+                                        Không thể thay đổi nhân viên phụ trách khi bất động sản đang hoạt động.
+                                    </div>
+                                @endif
+                                @error('assigned_agent_ids')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 4: Chu kỳ thanh toán --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Chu kỳ thanh toán
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if($organizationPaymentCycle)
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Chu kỳ thanh toán mặc định:</strong> {{ $organizationPaymentCycle->name ?? $organizationPaymentCycle->cycle_type_name }}
+                        </div>
+                    @endif
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Chọn chu kỳ thanh toán (tùy chọn)</label>
+                        <select name="payment_cycle_id" id="payment_cycle_id" class="form-select @error('payment_cycle_id') is-invalid @enderror" {{ $property->status == 1 ? 'disabled' : '' }}>
+                            <option value="">-- Sử dụng chu kỳ mặc định --</option>
+                            @if($paymentCycles && $paymentCycles->count() > 0)
+                                @foreach($paymentCycles as $cycle)
+                                    <option value="{{ $cycle->id }}" {{ old('payment_cycle_id', $property->payment_cycle_id) == $cycle->id ? 'selected' : '' }}>
+                                        {{ $cycle->name ?? $cycle->cycle_type_name }}
+                                        @if($cycle->is_default)
+                                            (Mặc định)
+                                        @endif
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @if($property->status == 1)
+                            <div class="form-text text-warning">
+                                <i class="fas fa-info-circle"></i>
+                                Chỉ có thể sửa chu kỳ thanh toán khi bất động sản ở trạng thái nháp (Tạm ngưng).
+                            </div>
+                        @else
+                            <div class="form-text">
+                                <i class="fas fa-info-circle text-info"></i>
+                                Chọn chu kỳ thanh toán cho bất động sản này. Nếu không chọn, sẽ dùng chu kỳ mặc định của tổ chức.
+                            </div>
+                        @endif
+                        @error('payment_cycle_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 5: Nhóm dịch vụ --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-list-alt me-2"></i>Nhóm dịch vụ
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if($defaultLeaseServiceSet)
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Nhóm dịch vụ mặc định:</strong> {{ $defaultLeaseServiceSet->name }}
+                            @if($defaultLeaseServiceSet->items)
+                                ({{ $defaultLeaseServiceSet->items->count() }} dịch vụ)
+                            @endif
+                        </div>
+                    @endif
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Chọn nhóm dịch vụ (tùy chọn)</label>
+                        <select name="lease_services_id" id="lease_services_id" class="form-select @error('lease_services_id') is-invalid @enderror">
+                            <option value="">-- Sử dụng nhóm dịch vụ mặc định --</option>
+                            @if($leaseServiceSets && $leaseServiceSets->count() > 0)
+                                @foreach($leaseServiceSets as $set)
+                                    <option value="{{ $set->id }}" {{ old('lease_services_id', $property->lease_services_id) == $set->id ? 'selected' : '' }}>
+                                        {{ $set->name }}
+                                        @if($set->items)
+                                            ({{ $set->items->count() }} dịch vụ)
+                                        @endif
+                                        @if($set->is_default)
+                                            (Mặc định)
+                                        @endif
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle text-info"></i>
+                            Chọn nhóm dịch vụ cho bất động sản này. Nếu không chọn, sẽ dùng nhóm dịch vụ mặc định của tổ chức.
+                        </div>
+                        @error('lease_services_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 6: Địa chỉ (Hệ thống cũ) --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt me-2"></i>Địa chỉ (Hệ thống cũ)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Tỉnh/Thành phố</label>
+                                <select name="province_code" id="provinceSelect" class="form-select @error('province_code') is-invalid @enderror">
+                                    <option value="">-- Chọn tỉnh/TP --</option>
+                                    @foreach ($provinces->sortBy(fn($p) => $p->name_local ?? $p->name) as $province)
+                                    <option value="{{ $province->code }}" {{ old('province_code', $property->location?->province_code) == $province->code ? 'selected' : '' }}>
+                                        {{ $province->name_local ?? $province->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('province_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Quận/Huyện</label>
+                                <select name="district_code" id="districtSelect" class="form-select @error('district_code') is-invalid @enderror" {{ !$property->location?->province_code ? 'disabled' : '' }}>
+                                    <option value="">-- Chọn quận/huyện --</option>
+                                    @foreach ($districts->sortBy(fn($d) => $d->name_local ?? $d->name) as $district)
+                                    <option value="{{ $district->code }}" {{ old('district_code', $property->location?->district_code) == $district->code ? 'selected' : '' }}>
+                                        {{ $district->name_local ?? $district->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('district_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Phường/Xã</label>
+                                <select name="ward_code" id="wardSelect" class="form-select @error('ward_code') is-invalid @enderror">
+                                    <option value="">-- Chọn phường/xã --</option>
+                                    @foreach ($wards->sortBy(fn($w) => $w->name_local ?? $w->name) as $ward)
+                                    <option value="{{ $ward->code }}" {{ old('ward_code', $property->location?->ward_code) == $ward->code ? 'selected' : '' }}>
+                                        {{ $ward->name_local ?? $ward->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('ward_code')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ chi tiết</label>
+                        <input type="text" name="street" class="form-control @error('street') is-invalid @enderror" value="{{ old('street', $property->location?->street) }}" placeholder="Số nhà, tên đường...">
+                        @error('street')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Card 7: Địa chỉ (Hệ thống mới 2025) --}}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt text-primary me-2"></i>Địa chỉ (Hệ thống mới 2025)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tỉnh/Thành phố</label>
+                                <select name="province_code_2025" id="provinceSelect2025" class="form-select @error('province_code_2025') is-invalid @enderror">
+                                    <option value="">-- Chọn tỉnh/TP --</option>
+                                    @foreach ($provinces2025->sortBy(fn($p) => $p->name_local ?? $p->name) as $province)
+                                    <option value="{{ $province->code }}" {{ old('province_code_2025', $property->location2025?->province_code) == $province->code ? 'selected' : '' }}>
+                                        {{ $province->name_local ?? $province->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('province_code_2025')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phường/Xã</label>
+                                <select name="ward_code_2025" id="wardSelect2025" class="form-select @error('ward_code_2025') is-invalid @enderror">
+                                    <option value="">-- Chọn phường/xã --</option>
+                                    @foreach ($wards2025->sortBy(fn($w) => $w->name_local ?? $w->name) as $ward)
+                                    <option value="{{ $ward->code }}" {{ old('ward_code_2025', $property->location2025?->ward_code) == $ward->code ? 'selected' : '' }}>
+                                        {{ $ward->name_local ?? $ward->name }}
+                                    </option>
+                                    @endforeach
+                                </select>
+                                @error('ward_code_2025')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Địa chỉ chi tiết</label>
+                        <input type="text" name="street_2025" class="form-control @error('street_2025') is-invalid @enderror" value="{{ old('street_2025', $property->location2025?->street) }}" placeholder="Số nhà, tên đường...">
+                        @error('street_2025')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Form Actions: Layout ngang cho form dài --}}
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    @include('staff.components.action-buttons', [
+                        'layout' => 'horizontal',
+                        'size' => 'md',
+                        'actions' => [
+                            [
+                                'type' => 'submit',
+                                'variant' => 'primary',
+                                'label' => 'Cập nhật Bất động sản',
+                                'icon' => 'fas fa-save'
+                            ],
+                            [
+                                'type' => 'link',
+                                'variant' => 'secondary',
+                                'label' => 'Hủy',
+                                'icon' => 'fas fa-times',
+                                'url' => route('staff.properties.index')
+                            ]
+                        ]
+                    ])
+                </div>
+            </div>
+        </form>
+    </div>
+</main>
+
+@push('styles')
+<style>
+.image-upload-area {
+    transition: all 0.3s ease;
+}
+
+.image-upload-area:hover {
+    border-color: #007bff !important;
+    background-color: #f8f9fa !important;
+}
+
+.image-upload-area.dragover {
+    border-color: #007bff !important;
+    background-color: #e3f2fd !important;
+    transform: scale(1.02);
+}
+
+.image-preview-item {
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.image-preview-item img {
+    transition: transform 0.3s ease;
+}
+
+.image-preview-item:hover img {
+    transform: scale(1.05);
+}
+
+.marked-for-deletion {
+    opacity: 0.5 !important;
+    border: 3px solid #dc3545 !important;
+    border-radius: 8px;
+    position: relative;
+}
+
+.marked-for-deletion::after {
+    content: 'Đã đánh dấu xóa';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.image-preview-item .btn-remove {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-preview-item:hover .btn-remove {
+    opacity: 1;
+}
+</style>
+@endpush
+
+@push('styles')
+<link rel="stylesheet" href="{{ asset('assets/css/user/notifications.css') }}">
+@endpush
+
+@push('scripts')
+<script src="{{ asset('assets/js/notifications.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('propertyForm');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show preloader
+        if (window.Preloader) {
+            window.Preloader.show();
+        }
+        
+        const formData = new FormData(this);
+        
+        // Handle payment cycle field - only send if status is 0 (draft)
+        const statusSelect = document.getElementById('statusSelect');
+        const paymentCycleSelect = document.getElementById('payment_cycle_id');
+        const status = parseInt(statusSelect?.value || '1');
+        
+        if (status === 1 && paymentCycleSelect) {
+            // Remove payment_cycle_id from formData if status is active
+            formData.delete('payment_cycle_id');
+        } else if (status === 0 && paymentCycleSelect && !paymentCycleSelect.disabled) {
+            // Ensure payment_cycle_id is included when status is draft
+            if (paymentCycleSelect.value) {
+                formData.set('payment_cycle_id', paymentCycleSelect.value);
+            }
+        }
+        
+        // Remove dangerous fields that should not be sent
+        const dangerousFields = ['organization_id', 'org_id', 'owner_id'];
+        dangerousFields.forEach(field => {
+            if (formData.has(field)) {
+                console.warn('Removing dangerous field from form data:', field, 'value:', formData.get(field));
+                formData.delete(field);
+            }
+        });
+        
+        // Double check - remove again just before sending
+        dangerousFields.forEach(field => {
+            if (formData.has(field)) {
+                formData.delete(field);
+            }
+        });
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+            Notify.error('Lỗi bảo mật: Không tìm thấy CSRF token. Vui lòng tải lại trang và thử lại.', 'Lỗi bảo mật!');
+            if (window.Preloader) {
+                window.Preloader.hide();
+            }
+            return;
+        }
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content'),
+                'Accept': 'application/json'
+            }
+        })
+        .then(async response => {
+            const contentType = response.headers.get('content-type');
+            let data;
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                data = { success: false, message: 'Lỗi không xác định từ server' };
+            }
+            
+            if (!response.ok) {
+                throw new Error(data.message || `HTTP error! status: ${response.status}`);
+            }
+            
+            return data;
+        })
+        .then(data => {
+            if (data.success) {
+                Notify.success(data.message, 'Thành công!');
+                setTimeout(() => {
+                    window.location.href = '{{ route("staff.properties.show", $property->id) }}';
+                }, 1500);
+            } else {
+                Notify.error(data.message || 'Có lỗi xảy ra', 'Lỗi!');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const errorMessage = error.message || 'Đã xảy ra lỗi không xác định';
+            Notify.error('Không thể cập nhật bất động sản: ' + errorMessage + '. Vui lòng thử lại sau hoặc liên hệ Admin để được hỗ trợ.', 'Lỗi hệ thống!');
+        })
+        .finally(() => {
+            if (window.Preloader) {
+                window.Preloader.hide();
+            }
+        });
+    });
+});
+
+// Handle status change - enable/disable payment cycle field
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.getElementById('statusSelect');
+    const paymentCycleSelect = document.getElementById('payment_cycle_id');
+    
+    if (statusSelect && paymentCycleSelect) {
+        function updatePaymentCycleField() {
+            const status = parseInt(statusSelect.value);
+            if (status === 1) {
+                paymentCycleSelect.disabled = true;
+            } else {
+                paymentCycleSelect.disabled = false;
+            }
+        }
+        
+        updatePaymentCycleField();
+        statusSelect.addEventListener('change', updatePaymentCycleField);
+    }
+});
+
+// Cascading dropdowns - Old Location
+document.addEventListener('DOMContentLoaded', function() {
+    const provinceSelect = document.getElementById('provinceSelect');
+    if (provinceSelect) {
+        provinceSelect.addEventListener('change', function() {
+            const provinceCode = this.value;
+            const districtSelect = document.getElementById('districtSelect');
+            const wardSelect = document.getElementById('wardSelect');
+            
+            districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            
+            if (!provinceCode) {
+                districtSelect.disabled = true;
+                wardSelect.disabled = true;
+                return;
+            }
+            
+            fetch(`/staff/api/geo/districts/${provinceCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.sort((a, b) => {
+                            const aName = (a.name_local || a.name || '').toLowerCase();
+                            const bName = (b.name_local || b.name || '').toLowerCase();
+                            return aName.localeCompare(bName, 'vi');
+                        });
+                        
+                        data.forEach(d => {
+                            const opt = document.createElement('option');
+                            opt.value = d.code;
+                            opt.textContent = d.name_local || d.name;
+                            districtSelect.appendChild(opt);
+                        });
+                        districtSelect.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading districts:', error);
+                });
+        });
+    }
+
+    const districtSelect = document.getElementById('districtSelect');
+    if (districtSelect) {
+        districtSelect.addEventListener('change', function() {
+            const districtCode = this.value;
+            const wardSelect = document.getElementById('wardSelect');
+            
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            
+            if (!districtCode) {
+                wardSelect.disabled = true;
+                return;
+            }
+            
+            fetch(`/staff/api/geo/wards/${districtCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.sort((a, b) => {
+                            const aName = (a.name_local || a.name || '').toLowerCase();
+                            const bName = (b.name_local || b.name || '').toLowerCase();
+                            return aName.localeCompare(bName, 'vi');
+                        });
+                        
+                        data.forEach(w => {
+                            const opt = document.createElement('option');
+                            opt.value = w.code;
+                            opt.textContent = w.name_local || w.name;
+                            wardSelect.appendChild(opt);
+                        });
+                        wardSelect.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wards:', error);
+                });
+        });
+    }
+
+    // New location 2025 cascading dropdowns
+    const provinceSelect2025 = document.getElementById('provinceSelect2025');
+    if (provinceSelect2025) {
+        provinceSelect2025.addEventListener('change', function() {
+            const provinceCode = this.value;
+            const wardSelect2025 = document.getElementById('wardSelect2025');
+            
+            wardSelect2025.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            
+            if (!provinceCode) {
+                wardSelect2025.disabled = true;
+                return;
+            }
+            
+            fetch(`/staff/api/geo/wards-2025/${provinceCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.sort((a, b) => {
+                            const aName = (a.name_local || a.name || '').toLowerCase();
+                            const bName = (b.name_local || b.name || '').toLowerCase();
+                            return aName.localeCompare(bName, 'vi');
+                        });
+                        
+                        data.forEach(w => {
+                            const opt = document.createElement('option');
+                            opt.value = w.code;
+                            opt.textContent = w.name_local || w.name;
+                            wardSelect2025.appendChild(opt);
+                        });
+                        wardSelect2025.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading wards-2025:', error);
+                });
+        });
+    }
+});
+
+// Image upload functions for multiple files
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('images');
+    const imagePreview = document.getElementById('image-preview');
+
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            imagePreview.innerHTML = '';
+            
+            if (e.target.files && e.target.files.length > 0) {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'col-12';
+                loadingDiv.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Đang tải ảnh...</div>';
+                imagePreview.appendChild(loadingDiv);
+                
+                Array.from(e.target.files).forEach((file, index) => {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        const col = document.createElement('div');
+                        col.className = 'col-md-4 mb-2';
+                        col.innerHTML = `
+                            <div class="image-preview-item position-relative">
+                                <img src="${e.target.result}" class="img-thumbnail" style="height: 100px; object-fit: cover; width: 100%;">
+                                <div class="position-absolute top-0 start-0 bg-dark bg-opacity-75 text-white px-1 rounded-bottom-end" style="font-size: 0.7rem;">
+                                    ${file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 btn-remove" 
+                                        onclick="removeImagePreview(this)" title="Xóa ảnh">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `;
+                        
+                        const loading = imagePreview.querySelector('.col-12');
+                        if (loading && loading.innerHTML.includes('spinner')) {
+                            loading.remove();
+                        }
+                        
+                        imagePreview.appendChild(col);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+    }
+});
+
+function removeImagePreview(button) {
+    const imageContainer = button.closest('.col-md-4');
+    const imageInput = document.getElementById('images');
+    const imagePreview = document.getElementById('image-preview');
+    
+    imageContainer.style.transition = 'opacity 0.3s ease';
+    imageContainer.style.opacity = '0';
+    
+    setTimeout(() => {
+        imageContainer.remove();
+        
+        const remainingImages = imagePreview.querySelectorAll('.col-md-4');
+        if (remainingImages.length === 0 && imageInput) {
+            imageInput.value = '';
+        }
+    }, 300);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#007bff';
+    e.currentTarget.style.backgroundColor = '#f8f9fa';
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#dee2e6';
+    e.currentTarget.style.backgroundColor = 'transparent';
+}
+
+function handleDrop(e, inputId) {
+    e.preventDefault();
+    e.currentTarget.style.borderColor = '#dee2e6';
+    e.currentTarget.style.backgroundColor = 'transparent';
+    
+    const files = e.dataTransfer.files;
+    const input = document.getElementById(inputId);
+    
+    if (files.length > 0) {
+        const dt = new DataTransfer();
+        Array.from(files).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                dt.items.add(file);
+            }
+        });
+        
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+// Đánh dấu ảnh để xóa (sẽ xóa khi submit form)
+function markImageForDeletion(button, documentId) {
+    const imageContainer = button.closest('.image-item');
+    const isMarked = imageContainer.getAttribute('data-marked-for-delete') === 'true';
+    
+    if (isMarked) {
+        // Nếu đã đánh dấu, hủy đánh dấu
+        imageContainer.setAttribute('data-marked-for-delete', 'false');
+        imageContainer.classList.remove('marked-for-deletion');
+        imageContainer.style.opacity = '1';
+        imageContainer.style.border = '';
+        button.classList.remove('btn-secondary');
+        button.classList.add('btn-danger');
+        
+        // Xóa hidden input nếu có
+        const hiddenInput = document.querySelector(`input[name="deleted_image_ids[]"][value="${documentId}"]`);
+        if (hiddenInput) {
+            hiddenInput.remove();
+        }
+        
+        if (typeof Notify !== 'undefined') {
+            Notify.info('Đã hủy đánh dấu xóa ảnh. Ảnh sẽ được giữ lại khi lưu.', 'Đã hủy');
+        }
+    } else {
+        // Đánh dấu để xóa
+        if (typeof Notify !== 'undefined') {
+            Notify.confirm({
+                title: 'Xác nhận xóa ảnh',
+                message: 'Ảnh này sẽ được xóa khi bạn lưu form. Bạn có muốn tiếp tục?',
+                type: 'warning',
+                confirmText: 'Xác nhận',
+                cancelText: 'Hủy',
+                onConfirm: function() {
+                    imageContainer.setAttribute('data-marked-for-delete', 'true');
+                    imageContainer.classList.add('marked-for-deletion');
+                    imageContainer.style.opacity = '0.5';
+                    imageContainer.style.border = '3px solid #dc3545';
+                    button.classList.remove('btn-danger');
+                    button.classList.add('btn-secondary');
+                    button.innerHTML = '<i class="fas fa-undo"></i>';
+                    
+                    // Tạo hidden input để gửi khi submit
+                    let hiddenInput = document.querySelector(`input[name="deleted_image_ids[]"][value="${documentId}"]`);
+                    if (!hiddenInput) {
+                        hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'deleted_image_ids[]';
+                        hiddenInput.value = documentId;
+                        document.getElementById('propertyForm').appendChild(hiddenInput);
+                    }
+                    
+                    if (typeof Notify !== 'undefined') {
+                        Notify.success('Ảnh đã được đánh dấu để xóa. Ảnh sẽ được xóa khi bạn lưu form.', 'Đã đánh dấu');
+                    }
+                }
+            });
+        } else {
+            // Fallback nếu không có Notify
+            if (confirm('Ảnh này sẽ được xóa khi bạn lưu form. Bạn có muốn tiếp tục?')) {
+                imageContainer.setAttribute('data-marked-for-delete', 'true');
+                imageContainer.classList.add('marked-for-deletion');
+                imageContainer.style.opacity = '0.5';
+                imageContainer.style.border = '3px solid #dc3545';
+                button.classList.remove('btn-danger');
+                button.classList.add('btn-secondary');
+                button.innerHTML = '<i class="fas fa-undo"></i>';
+                
+                let hiddenInput = document.querySelector(`input[name="deleted_image_ids[]"][value="${documentId}"]`);
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = 'deleted_image_ids[]';
+                    hiddenInput.value = documentId;
+                    document.getElementById('propertyForm').appendChild(hiddenInput);
+                }
+            }
+        }
+    }
+}
+</script>
+@endpush
+@endsection

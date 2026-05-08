@@ -1,0 +1,138 @@
+/* Tenant glass UI overrides scoped to tenant routes only */
+.glass-ui-tenant {
+    --tenant-glass-text: #103451;
+    --tenant-glass-muted: #4b6c88;
+    --tenant-glass-bg: rgba(255, 255, 255, 0.72);
+    --tenant-glass-bg-soft: rgba(255, 255, 255, 0.52);
+    --tenant-glass-border: rgba(162, 206, 255, 0.62);
+    --tenant-glass-shadow: 0 22px 48px -30px rgba(26, 86, 145, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    color: var(--tenant-glass-text);
+    font-family: 'Plus Jakarta Sans', 'Instrument Sans', 'Segoe UI', Tahoma, sans-serif;
+    background:
+        radial-gradient(circle at 8% 5%, rgba(48, 160, 255, 0.18) 0%, rgba(48, 160, 255, 0) 42%),
+        radial-gradient(circle at 91% 10%, rgba(28, 214, 185, 0.15) 0%, rgba(28, 214, 185, 0) 38%),
+        linear-gradient(145deg, #edf6ff 0%, #f6fbff 45%, #ecfbf6 100%);
+}
+
+.glass-ui-tenant .page-container-blue {
+    background: transparent;
+}
+
+.glass-ui-tenant .filter-section-blue,
+.glass-ui-tenant .summary-card-blue,
+.glass-ui-tenant .invoice-card-blue,
+.glass-ui-tenant .payment-card,
+.glass-ui-tenant .card,
+.glass-ui-tenant .modal-content,
+.glass-ui-tenant .table-responsive,
+.glass-ui-tenant .dropdown-menu {
+    border: 1px solid var(--tenant-glass-border) !important;
+    background: linear-gradient(145deg, var(--tenant-glass-bg), var(--tenant-glass-bg-soft)) !important;
+    box-shadow: var(--tenant-glass-shadow) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.glass-ui-tenant .filter-section-blue,
+.glass-ui-tenant .card,
+.glass-ui-tenant .invoice-card-blue,
+.glass-ui-tenant .summary-card-blue,
+.glass-ui-tenant .payment-card {
+    border-radius: 16px;
+}
+
+.glass-ui-tenant .form-control,
+.glass-ui-tenant .form-select,
+.glass-ui-tenant .month-select-blue,
+.glass-ui-tenant select,
+.glass-ui-tenant input[type="date"],
+.glass-ui-tenant input[type="month"],
+.glass-ui-tenant input[type="datetime-local"] {
+    border: 1px solid var(--tenant-glass-border);
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.72);
+    color: var(--tenant-glass-text);
+}
+
+.glass-ui-tenant .form-control::placeholder {
+    color: var(--tenant-glass-muted);
+}
+
+.glass-ui-tenant .form-control:focus,
+.glass-ui-tenant .form-select:focus,
+.glass-ui-tenant .month-select-blue:focus,
+.glass-ui-tenant select:focus,
+.glass-ui-tenant input[type="date"]:focus,
+.glass-ui-tenant input[type="month"]:focus,
+.glass-ui-tenant input[type="datetime-local"]:focus {
+    border-color: rgba(54, 159, 255, 0.88) !important;
+    box-shadow: 0 0 0 0.2rem rgba(54, 159, 255, 0.18) !important;
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    color: var(--tenant-glass-text);
+}
+
+.glass-ui-tenant .form-select,
+.glass-ui-tenant .month-select-blue,
+.glass-ui-tenant select.form-select,
+.glass-ui-tenant select.form-control {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    padding-right: 2.4rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='M5 8l5 5 5-5' stroke='%2313517f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+}
+
+.glass-ui-tenant input[type="date"],
+.glass-ui-tenant input[type="month"],
+.glass-ui-tenant input[type="datetime-local"] {
+    padding-right: 2.55rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none'%3E%3Crect x='3.5' y='5.5' width='17' height='15' rx='2.5' stroke='%2313517f' stroke-width='1.6'/%3E%3Cpath d='M8 3.5v4M16 3.5v4M3.5 9.5h17' stroke='%2313517f' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.72rem center;
+    background-size: 1.05rem;
+    color-scheme: light;
+}
+
+.glass-ui-tenant input[type="date"]::-webkit-calendar-picker-indicator,
+.glass-ui-tenant input[type="month"]::-webkit-calendar-picker-indicator,
+.glass-ui-tenant input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    cursor: pointer;
+    width: 1.3rem;
+    height: 1.3rem;
+    margin: 0;
+}
+
+.glass-ui-tenant input[type="date"]::-webkit-datetime-edit,
+.glass-ui-tenant input[type="month"]::-webkit-datetime-edit,
+.glass-ui-tenant input[type="datetime-local"]::-webkit-datetime-edit {
+    color: var(--tenant-glass-text);
+}
+
+.glass-ui-tenant .dropdown-item {
+    color: var(--tenant-glass-text);
+}
+
+.glass-ui-tenant .dropdown-item:hover,
+.glass-ui-tenant .dropdown-item:focus {
+    background: rgba(54, 159, 255, 0.12);
+}
+
+.glass-ui-tenant .btn,
+.glass-ui-tenant .btn-primary,
+.glass-ui-tenant .btn-outline-primary {
+    border-radius: 12px;
+}
+
+.glass-ui-tenant .btn-primary {
+    border-color: transparent;
+    background: linear-gradient(135deg, #0d7bf2, #0dc7d8);
+    box-shadow: 0 14px 30px -20px rgba(18, 128, 217, 0.85);
+}
+
+.glass-ui-tenant .btn-primary:hover {
+    background: linear-gradient(135deg, #0966cd, #0aa9b8);
+}

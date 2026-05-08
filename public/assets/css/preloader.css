@@ -1,0 +1,98 @@
+/* ========================================
+   PRELOADER — đồng bộ với Auth (auth-loading-overlay / card / orbit)
+   ======================================== */
+
+.preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(4, 14, 27, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.preloader.fade-out {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.preloader-auth-card {
+    min-width: 250px;
+    padding: 22px 26px;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.08));
+    box-shadow: 0 18px 36px rgba(5, 12, 24, 0.42);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+}
+
+.preloader-auth-orbit {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    position: relative;
+}
+
+.preloader-auth-orbit::before,
+.preloader-auth-orbit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    border: 3px solid transparent;
+}
+
+.preloader-auth-orbit::before {
+    border-top-color: rgba(111, 250, 255, 0.95);
+    border-right-color: rgba(111, 250, 255, 0.55);
+    animation: preloaderSpinClockwise 0.95s linear infinite;
+}
+
+.preloader-auth-orbit::after {
+    inset: 9px;
+    border-bottom-color: rgba(77, 247, 199, 0.92);
+    border-left-color: rgba(77, 247, 199, 0.55);
+    animation: preloaderSpinCounterClockwise 0.78s linear infinite;
+}
+
+.preloader-auth-text {
+    margin: 0;
+    color: #e8f9ff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+}
+
+@keyframes preloaderSpinClockwise {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes preloaderSpinCounterClockwise {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+@media (max-width: 480px) {
+    .preloader-auth-card {
+        min-width: 210px;
+        padding: 18px 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .preloader-auth-orbit::before,
+    .preloader-auth-orbit::after {
+        animation: none;
+    }
+}

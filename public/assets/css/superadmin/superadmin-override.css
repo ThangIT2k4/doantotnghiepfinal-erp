@@ -1,0 +1,575 @@
+/* Super Admin Specific Overrides */
+
+/* Super Admin Logo Styling */
+.sidebar .logo i.fa-crown {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1a1a1a;
+}
+
+/* Super Admin Brand Colors */
+.sidebar .logo-text {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+/* Super Admin Navigation Active States */
+.nav-item.active {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 237, 78, 0.1) 100%);
+    border-left: 3px solid #ffd700;
+    color: #1a1a1a;
+}
+
+.nav-item.active i {
+    color: #ffd700;
+}
+
+/* Super Admin Submenu Styles */
+.submenu {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-left: 3px solid #ffd700;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.submenu-item {
+    color: #6c757d;
+    transition: all 0.2s ease;
+    border-left: 2px solid transparent;
+}
+
+.submenu-item:hover {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 237, 78, 0.1) 100%);
+    color: #1a1a1a;
+    border-left-color: #ffd700;
+}
+
+.submenu-item.active {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 237, 78, 0.15) 100%);
+    border-left: 2px solid #ffd700;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.submenu-item.active i {
+    color: #ffd700;
+}
+
+.submenu-item i {
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+.submenu-item:hover i {
+    color: #ffd700;
+}
+
+/* Super Admin Submenu Arrow */
+.submenu-arrow {
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.nav-item.has-submenu:hover .submenu-arrow {
+    color: #ffd700;
+}
+
+.nav-item.has-submenu.active .submenu-arrow {
+    color: #ffd700;
+    transform: rotate(180deg);
+}
+
+/* Super Admin Page Header */
+.page-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    border-radius: 0 0 12px 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.page-title {
+    color: #1a1a1a;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.page-title i {
+    color: #ffd700;
+    font-size: 1.5rem;
+}
+
+.page-subtitle {
+    color: #6c757d;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.95rem;
+}
+
+/* Super Admin Stats Cards */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s ease;
+    border: 1px solid #f1f3f4;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-icon::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: 12px;
+}
+
+.stat-content h3 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.2;
+}
+
+.stat-content p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* Super Admin Chart Cards */
+.chart-card, .activity-card, .organizations-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    margin-bottom: 1.5rem;
+    border: 1px solid #f1f3f4;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.5rem 1.5rem 0;
+    border-bottom: none;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+}
+
+.card-title {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.card-title i {
+    color: #ffd700;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Super Admin Activity Items */
+.activity-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.activity-item:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-color: #ffd700;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    font-size: 0.9rem;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-text {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1a1a1a;
+    font-weight: 500;
+}
+
+.activity-time {
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 400;
+}
+
+/* Super Admin Organizations */
+.organizations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.organization-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+
+.organization-item:hover {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-color: #ffd700;
+}
+
+.org-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.org-content {
+    flex: 1;
+}
+
+.org-name {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.org-stats {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.org-stats .badge {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* Super Admin Tables */
+.table-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f1f3f4;
+    overflow: hidden;
+}
+
+.table {
+    margin: 0;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-bottom: 2px solid #e9ecef;
+    color: #1a1a1a;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table tbody td {
+    padding: 1rem;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(255, 215, 0, 0.05);
+}
+
+/* Super Admin Forms */
+.form-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    border: 1px solid #f1f3f4;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    color: #1a1a1a;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.section-title i {
+    color: #ffd700;
+}
+
+/* Super Admin Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    border: none;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #ffed4e 0%, #ffd700 100%);
+    color: #1a1a1a;
+    transform: translateY(-1px);
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%);
+    border: none;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #ffca2c 0%, #ffc107 100%);
+    color: #1a1a1a;
+    transform: translateY(-1px);
+}
+
+/* Super Admin Status Badges */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Super Admin Responsive */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .page-header {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .stat-card {
+        padding: 1rem;
+    }
+    
+    .stat-content h3 {
+        font-size: 1.5rem;
+    }
+    
+    /* Mobile Sidebar */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -256px;
+        height: 100vh;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+    
+    .sidebar.mobile-open {
+        left: 0;
+    }
+    
+    .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+    }
+    
+    .main-content {
+        margin-left: 0;
+    }
+    
+    .top-header {
+        padding: 1rem;
+    }
+    
+    .header-left .page-title {
+        font-size: 1.1rem;
+    }
+    
+    .header-right .btn {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .form-card {
+        padding: 1rem;
+    }
+    
+    .chart-card .card-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+    
+    .header-right {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .stats-grid {
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+    
+    .stat-content h3 {
+        font-size: 1.3rem;
+    }
+    
+    .activity-item,
+    .organization-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .table thead th,
+    .table tbody td {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* Super Admin Loading States */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #ffd700;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

@@ -1,0 +1,78 @@
+.main-room-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.gallery-thumb {
+    height: 80px;
+    object-fit: cover;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gallery-thumb:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+}
+
+.gallery-more {
+    height: 80px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.gallery-more:hover {
+    background-color: #495057 !important;
+}
+
+.price-tag-large {
+    background: #ff6b35;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 1.5rem;
+    display: inline-block;
+}
+
+.contact-card {
+    top: 20px;
+}
+
+.price-breakdown {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.map-container {
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.description-content {
+    line-height: 1.6;
+}
+
+.description-content ul {
+    padding-left: 20px;
+}
+
+.description-content ul li {
+    margin-bottom: 5px;
+}
+
+@media (max-width: 768px) {
+    .contact-card {
+        position: static !important;
+    }
+    
+    .price-tag-large {
+        font-size: 1.2rem;
+        padding: 8px 16px;
+    }
+}

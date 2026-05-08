@@ -1,0 +1,324 @@
+/* ========================================
+   NEW COLOR SCHEME - MODERN ORANGE THEME
+   Bảng màu cam hiện đại, tươi tắn
+======================================== */
+
+:root {
+    /* Main Colors */
+    --primary: #FF6B35;
+    --primary-light: #FFA552;
+    --primary-dark: #E65100;
+    --secondary: #2F80ED;
+    --accent: #FFA552;
+    
+    /* Background Colors */
+    --background: #FFF8F3;
+    --background-white: #FFFFFF;
+    --foreground: #2E2E2E;
+    --muted: #757575;
+    
+    /* Border Colors */
+    --border: #E0E0E0;
+    --border-focus: #FFA552;
+    
+    /* Status Colors */
+    --success: #27AE60;
+    --error: #EB5757;
+    --warning: #FFA552;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #FF6B35, #FFA552);
+    --gradient-secondary: linear-gradient(180deg, #FFF8F3, #FFFFFF);
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-elegant: 0 10px 30px -10px rgba(255, 107, 53, 0.3);
+    
+    /* Transitions */
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ========================================
+   GLOBAL STYLES
+======================================== */
+
+/* Body Background */
+body {
+    background-color: var(--background) !important;
+    color: var(--foreground) !important;
+}
+
+/* ========================================
+   HEADER & FOOTER
+======================================== */
+
+/* Header Gradient */
+.header-gradient, 
+.navbar, 
+.footer-gradient {
+    background: var(--gradient-primary) !important;
+}
+
+/* ========================================
+   BUTTONS
+======================================== */
+
+/* Primary Button */
+.btn-primary, 
+.btn-main, 
+.search-btn, 
+.btn-login {
+    background: var(--primary) !important;
+    color: white !important;
+    border: none !important;
+    transition: var(--transition) !important;
+}
+
+.btn-primary:hover, 
+.btn-main:hover, 
+.search-btn:hover, 
+.btn-login:hover {
+    background: var(--primary-light) !important;
+    transform: scale(1.05) !important;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3) !important;
+}
+
+/* Secondary Button */
+.btn-secondary, 
+.btn-outline {
+    background: transparent !important;
+    color: var(--primary) !important;
+    border: 2px solid var(--primary) !important;
+    transition: var(--transition) !important;
+}
+
+.btn-secondary:hover, 
+.btn-outline:hover {
+    background: #FFF0E9 !important;
+    color: var(--primary) !important;
+    border-color: var(--primary) !important;
+}
+
+/* ========================================
+   FORMS
+======================================== */
+
+/* Form Controls */
+.form-control, 
+.form-select, 
+input, 
+select, 
+textarea {
+    border: 1px solid var(--border) !important;
+    background: var(--background-white) !important;
+    color: var(--foreground) !important;
+    transition: var(--transition) !important;
+}
+
+.form-control:focus, 
+.form-select:focus, 
+input:focus, 
+select:focus, 
+textarea:focus {
+    border-color: var(--border-focus) !important;
+    box-shadow: 0 0 0 3px rgba(255, 165, 82, 0.1) !important;
+    outline: none !important;
+}
+
+/* ========================================
+   CARDS & CONTAINERS
+======================================== */
+
+/* Cards */
+.card, 
+.property-card, 
+.category-card, 
+.info-card {
+    background: var(--background-white) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: var(--transition) !important;
+}
+
+.card:hover, 
+.property-card:hover, 
+.category-card:hover, 
+.info-card:hover {
+    transform: scale(1.02) !important;
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.15) !important;
+}
+
+/* Card Titles */
+.card-title, 
+.property-title, 
+.category-title {
+    color: var(--foreground) !important;
+    font-weight: 600 !important;
+}
+
+/* ========================================
+   ICONS
+======================================== */
+
+/* Primary Icons */
+.icon-primary, 
+.category-icon, 
+.property-icon, 
+.card-icon {
+    color: var(--primary) !important;
+}
+
+/* Secondary Icons */
+.icon-secondary {
+    color: var(--secondary) !important;
+}
+
+/* Outline Icons */
+.icon-outline {
+    color: var(--primary) !important;
+    opacity: 0.8 !important;
+}
+
+.icon-outline:hover {
+    opacity: 1 !important;
+    color: var(--primary-light) !important;
+}
+
+/* ========================================
+   BANNERS & RIBBONS
+======================================== */
+
+/* Banners */
+.banner, 
+.ribbon, 
+.callout, 
+.section-badge {
+    background: var(--primary) !important;
+    color: white !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+
+/* ========================================
+   NOTIFICATIONS & ALERTS
+======================================== */
+
+/* Success */
+.alert-success, 
+.notification-success {
+    background: rgba(39, 174, 96, 0.1) !important;
+    border: 1px solid var(--success) !important;
+    color: var(--success) !important;
+}
+
+/* Error */
+.alert-error, 
+.alert-danger, 
+.notification-error {
+    background: rgba(235, 87, 87, 0.1) !important;
+    border: 1px solid var(--error) !important;
+    color: var(--error) !important;
+}
+
+/* Warning */
+.alert-warning, 
+.notification-warning {
+    background: rgba(255, 165, 82, 0.1) !important;
+    border: 1px solid var(--warning) !important;
+    color: var(--warning) !important;
+}
+
+/* ========================================
+   HERO SECTIONS
+======================================== */
+
+/* Hero Background */
+.hero-section, 
+.hero-banner {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+/* ========================================
+   PRICING & STATS
+======================================== */
+
+/* Price Text */
+.price, 
+.cost, 
+.amount {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+}
+
+/* Stats */
+.stats-section, 
+.stat-card {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+}
+
+/* ========================================
+   LINKS
+======================================== */
+
+/* Primary Links */
+a, 
+.link, 
+.view-link {
+    color: var(--primary) !important;
+    transition: var(--transition) !important;
+}
+
+a:hover, 
+.link:hover, 
+.view-link:hover {
+    color: var(--primary-light) !important;
+}
+
+/* ========================================
+   UTILITY CLASSES
+======================================== */
+
+/* Text Colors */
+.text-primary { color: var(--primary) !important; }
+.text-secondary { color: var(--secondary) !important; }
+.text-success { color: var(--success) !important; }
+.text-error { color: var(--error) !important; }
+.text-warning { color: var(--warning) !important; }
+
+/* Background Colors */
+.bg-primary { background: var(--primary) !important; }
+.bg-secondary { background: var(--secondary) !important; }
+.bg-success { background: var(--success) !important; }
+.bg-error { background: var(--error) !important; }
+.bg-warning { background: var(--warning) !important; }
+
+/* Border Colors */
+.border-primary { border-color: var(--primary) !important; }
+.border-secondary { border-color: var(--secondary) !important; }
+.border-success { border-color: var(--success) !important; }
+.border-error { border-color: var(--error) !important; }
+.border-warning { border-color: var(--warning) !important; }
+
+/* ========================================
+   RESPONSIVE ADJUSTMENTS
+======================================== */
+
+@media (max-width: 768px) {
+    .btn-primary:hover, 
+    .btn-main:hover, 
+    .search-btn:hover, 
+    .btn-login:hover {
+        transform: scale(1.02) !important;
+    }
+    
+    .card:hover, 
+    .property-card:hover, 
+    .category-card:hover, 
+    .info-card:hover {
+        transform: scale(1.01) !important;
+    }
+}

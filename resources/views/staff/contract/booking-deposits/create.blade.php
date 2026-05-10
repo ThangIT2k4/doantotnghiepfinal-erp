@@ -1,4 +1,4 @@
-﻿@extends('layouts.staff_dashboard')
+@extends('layouts.staff_dashboard')
 
 @section('title', 'Tạo đặt cọc mới')
 
@@ -456,10 +456,17 @@ if (viewingSelect) {
                 if (propertySelect) {
                     const propertyOption = Array.from(propertySelect.options).find(opt => opt.value === propertyId);
                     if (propertyOption) {
+                        const prevPropertyId = propertySelect.value;
+                        const unitSelect = document.getElementById('unit-select');
+                        const hasUnitsLoaded = unitSelect && unitSelect.options.length > 1;
+                        
                         propertySelect.value = propertyId;
                         fieldsFilled.push('Bất động sản');
-                        // Trigger change to load units
-                        propertySelect.dispatchEvent(new Event('change'));
+                        
+                        // Trigger change to load units only if property changed or units not loaded
+                        if (prevPropertyId !== propertyId || !hasUnitsLoaded) {
+                            propertySelect.dispatchEvent(new Event('change'));
+                        }
                         
                         // After units are loaded, select the unit
                         setTimeout(() => {

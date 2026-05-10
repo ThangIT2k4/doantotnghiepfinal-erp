@@ -1,4 +1,4 @@
-﻿@extends('layouts.staff_dashboard')
+@extends('layouts.staff_dashboard')
 
 @section('title', 'Thêm Hợp đồng Mới')
 
@@ -1011,30 +1011,55 @@ document.addEventListener('DOMContentLoaded', function() {
         const rentAmountInput = document.getElementById('rentAmount');
         const depositAmountInput = document.getElementById('depositAmount');
         
-        if (unitId && unitsData[unitId]) {
-            const unit = unitsData[unitId];
-            
-            // Auto-fill rent amount if exists and not already filled
-            if (unit.base_rent && unit.base_rent > 0) {
-                if (!rentAmountInput.value || rentAmountInput.value.trim() === '') {
-                    // Set raw number value (remove decimals), let input formatter handle formatting
-                    const rentValue = Math.round(parseFloat(unit.base_rent));
-                    rentAmountInput.value = rentValue.toString();
-                    console.log('Auto-filled rent:', rentValue);
-                    // Trigger input event for number formatter
-                    rentAmountInput.dispatchEvent(new Event('input'));
+        if (unitId) {
+            // Auto-select booking deposit if it matches the unit and isn't already selected
+            if (bookingDepositSelect && (!bookingDepositSelect.value || bookingDepositSelect.value === '')) {
+                const matchedOption = Array.from(bookingDepositSelect.options).find(opt => opt.getAttribute('data-unit-id') == unitId);
+                if (matchedOption && matchedOption.value) {
+                    bookingDepositSelect.value = matchedOption.value;
+                    if (window.Notify) {
+                        Notify.success('Đã tự động chọn Đặt cọc tương ứng với phòng này', 'Thông báo');
+                    }
+                    
+                    // Auto-fill lead and agent from the matched booking deposit
+                    const leadId = matchedOption.getAttribute('data-lead-id');
+                    const agentId = matchedOption.getAttribute('data-agent-id');
+                    
+                    if (leadId && leadSelect) {
+                        leadSelect.value = leadId;
+                        leadSelect.dispatchEvent(new Event('change'));
+                    }
+                    if (agentId && agentSelect) {
+                        agentSelect.value = agentId;
+                    }
                 }
             }
             
-            // Auto-fill deposit amount if exists and not already filled
-            if (unit.deposit_amount && unit.deposit_amount > 0) {
-                if (!depositAmountInput.value || depositAmountInput.value.trim() === '') {
-                    // Set raw number value (remove decimals), let input formatter handle formatting
-                    const depositValue = Math.round(parseFloat(unit.deposit_amount));
-                    depositAmountInput.value = depositValue.toString();
-                    console.log('Auto-filled deposit:', depositValue);
-                    // Trigger input event for number formatter
-                    depositAmountInput.dispatchEvent(new Event('input'));
+            if (unitsData[unitId]) {
+                const unit = unitsData[unitId];
+                
+                // Auto-fill rent amount if exists and not already filled
+                if (unit.base_rent && unit.base_rent > 0) {
+                    if (!rentAmountInput.value || rentAmountInput.value.trim() === '') {
+                        // Set raw number value (remove decimals), let input formatter handle formatting
+                        const rentValue = Math.round(parseFloat(unit.base_rent));
+                        rentAmountInput.value = rentValue.toString();
+                        console.log('Auto-filled rent:', rentValue);
+                        // Trigger input event for number formatter
+                        rentAmountInput.dispatchEvent(new Event('input'));
+                    }
+                }
+                
+                // Auto-fill deposit amount if exists and not already filled
+                if (unit.deposit_amount && unit.deposit_amount > 0) {
+                    if (!depositAmountInput.value || depositAmountInput.value.trim() === '') {
+                        // Set raw number value (remove decimals), let input formatter handle formatting
+                        const depositValue = Math.round(parseFloat(unit.deposit_amount));
+                        depositAmountInput.value = depositValue.toString();
+                        console.log('Auto-filled deposit:', depositValue);
+                        // Trigger input event for number formatter
+                        depositAmountInput.dispatchEvent(new Event('input'));
+                    }
                 }
             }
         }

@@ -44,11 +44,11 @@ jobs:
           # Verify image có vendor
           echo "📦 Verifying vendor in image..."
           if ! docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
-            test -f /opt/app/vendor/composer/autoload_real.php; then
+            test -f /var/www/html/vendor/composer/autoload_real.php; then
             echo "❌ Vendor verification FAILED"
-            echo "Checking what's in /opt/app/vendor/composer/:"
+            echo "Checking what's in /var/www/html/vendor/composer/:"
             docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
-              ls -la /opt/app/vendor/composer/ || true
+              ls -la /var/www/html/vendor/composer/ || true
             exit 1
           fi
           echo "✓ Vendor verified in image"
@@ -120,29 +120,13 @@ jobs:
             echo "🚀 Starting containers..."
             docker compose -f docker-compose.server.yml up -d --force-recreate --remove-orphans
 
-            echo "⏳ Waiting for app container to be ready..."
-            WAIT_SECONDS=0
-            MAX_WAIT=120
-            while [ $WAIT_SECONDS -lt $MAX_WAIT ]; do
-              if docker compose -f docker-compose.server.yml exec -T app test -f /var/www/html/vendor/composer/autoload_real.php 2>/dev/null; then
-                echo "✓ Vendor verified in container"
-                break
-              fi
-              
-              WAIT_SECONDS=$((WAIT_SECONDS + 5))
-              if [ $WAIT_SECONDS -lt $MAX_WAIT ]; then
-                echo "  waiting... ($WAIT_SECONDS/${MAX_WAIT}s)"
-                sleep 5
-              fi
-            done
-
-            if [ $WAIT_SECONDS -ge $MAX_WAIT ]; then
-              echo "❌ Timeout: vendor not ready after ${MAX_WAIT}s"
-              echo "📋 Checking container logs:"
-              docker compose -f docker-compose.server.yml logs app --tail 100
-              echo ""
-              echo "📋 Checking vendor in image:"
-              docker run --rm $APP_IMAGE ls -la /opt/app/vendor/composer/ || echo "vendor missing in image!"
+            echo "⏳ Waiting for app container to start..."
+            sleep 5
+            if docker compose -f docker-compose.server.yml exec -T app php -v >/dev/null 2>&1; then
+              echo "✓ App container is running"
+            else
+              echo "❌ App container failed to start"
+              docker compose -f docker-compose.server.yml logs app --tail 50
               exit 1
             fi
 

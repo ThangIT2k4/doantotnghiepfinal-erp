@@ -3,9 +3,18 @@ set -e
 
 echo "🚀 Starting Laravel..."
 
-cd /var/www/html
+mkdir -p /var/www/html
+echo "📋 Copying app from /opt/app to /var/www/html..."
+# Xóa file cũ để đảm bảo code mới nhất được cập nhật
+rm -f /var/www/html/.copy_finished
+cp -a /opt/app/. /var/www/html/
+sync
 
-echo "✅ App ready at /var/www/html"
+# Tạo file đánh dấu đã copy xong
+touch /var/www/html/.copy_finished
+echo "✓ Code sync complete"
+
+cd /var/www/html
 
 echo "✅ Bootstrap complete"
 echo ""

@@ -44,11 +44,11 @@ jobs:
           # Verify image có vendor
           echo "📦 Verifying vendor in image..."
           if ! docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
-            test -f /var/www/html/vendor/composer/autoload_real.php; then
+            test -f /opt/app/vendor/composer/autoload_real.php; then
             echo "❌ Vendor verification FAILED"
-            echo "Checking what's in /var/www/html/vendor/composer/:"
+            echo "Checking what's in /opt/app/vendor/composer/:"
             docker run --rm ghcr.io/${REPO_LC}-app:${{ github.sha }} \
-              ls -la /var/www/html/vendor/composer/ || true
+              ls -la /opt/app/vendor/composer/ || true
             exit 1
           fi
           echo "✓ Vendor verified in image"
@@ -120,12 +120,22 @@ jobs:
             echo "🚀 Starting containers..."
             docker compose -f docker-compose.server.yml up -d --force-recreate --remove-orphans
 
-            echo "⏳ Waiting for app container to start..."
-            sleep 5
-            if docker compose -f docker-compose.server.yml exec -T app php -v >/dev/null 2>&1; then
-              echo "✓ App container is running"
-            else
-              echo "❌ App container failed to start"
+            echo "⏳ Waiting for app to sync code..."
+            WAIT_SECONDS=0
+            MAX_WAIT=120
+            while [ $WAIT_SECONDS -lt $MAX_WAIT ]; do
+              if docker compose -f docker-compose.server.yml exec -T app test -f /var/www/html/.copy_finished 2>/dev/null; then
+                echo "✓ Code sync verified"
+                break
+              fi
+              
+              WAIT_SECONDS=$((WAIT_SECONDS + 5))
+              echo "  waiting... ($WAIT_SECONDS/${MAX_WAIT}s)"
+              sleep 5
+            done
+
+            if [ $WAIT_SECONDS -ge $MAX_WAIT ]; then
+              echo "❌ Timeout: code sync not ready"
               docker compose -f docker-compose.server.yml logs app --tail 50
               exit 1
             fi

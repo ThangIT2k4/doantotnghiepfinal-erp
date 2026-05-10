@@ -29,10 +29,8 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-WORKDIR /var/www/html
-# Một lần COPY + install: tránh layer COPY đè lên vendor từ bước composer (BuildKit / context).
-# .dockerignore phải loại /vendor trên host để luôn cài từ lock.
-COPY . /var/www/html
+WORKDIR /opt/app
+COPY . /opt/app
 
 RUN set -e && \
     COMPOSER_MEMORY_LIMIT=-1 composer config --no-plugins audit.abandoned ignore && \
@@ -43,10 +41,7 @@ RUN set -e && \
     composer dump-autoload --optimize --classmap-authoritative --no-dev && \
     echo "Verifying vendor..." && \
     test -f vendor/composer/autoload_real.php || (echo "FATAL: vendor/composer/autoload_real.php NOT FOUND after install!" && ls -la vendor/composer/ && exit 1) && \
-    echo "Setting permissions..." && \
-    chown -R www-data:www-data storage bootstrap/cache && \
-    chmod -R 775 storage bootstrap/cache && \
     echo "✓ Build ready"
 
-RUN chmod +x /var/www/html/docker/prod/entrypoint.sh
-ENTRYPOINT ["/var/www/html/docker/prod/entrypoint.sh"]
+RUN chmod +x /opt/app/docker/prod/entrypoint.sh
+ENTRYPOINT ["/opt/app/docker/prod/entrypoint.sh"]

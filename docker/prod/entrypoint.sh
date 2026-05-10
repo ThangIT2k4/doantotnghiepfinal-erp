@@ -7,18 +7,6 @@ cd /var/www/html
 
 echo "✅ App ready at /var/www/html"
 
-echo "🔄 Running migrations..."
-php artisan migrate --force || true
-
-echo "📦 Publishing Sanctum migrations..."
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider" --tag=sanctum-migrations --force || true
-
-echo "🔄 Running migrations again..."
-php artisan migrate --force || true
-
-echo "⚙️  Caching config..."
-php artisan config:cache || true
-
 echo "✅ Bootstrap complete"
 echo ""
 

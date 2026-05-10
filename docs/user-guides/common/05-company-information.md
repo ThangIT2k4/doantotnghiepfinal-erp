@@ -5,8 +5,7 @@
 **Tên công ty**: ZoroRMS
 
 **Địa chỉ**: 
-- Địa chỉ cũ: 12 Chùa Bộc, Quang Trung, Đống Đa, Hà Nội
-- Địa chỉ hiện tại: 12 Chùa Bộc, Kim Liên, Hà Nội
+    Xuân Phương, Nam Từ Liêm, Hà Nội
 
 **Hotline**: 0988470962
 

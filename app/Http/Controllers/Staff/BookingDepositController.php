@@ -2208,7 +2208,58 @@ class BookingDepositController extends Controller
         $currentStatus = $bookingDeposit->payment_status; // Lấy trạng thái hiện tại → Dùng để xác định transitions
         $canTransitionTo = $allowedTransitions[$currentStatus] ?? []; // Lấy danh sách trạng thái có thể chuyển đổi → Hiển thị buttons
 
-        return view('staff.contract.booking-deposits.show', compact('bookingDeposit', 'hasInvoice', 'invoice', 'canTransitionTo', 'hasLease', 'lease')); // Trả về view với tất cả data → Hiển thị chi tiết
+        $qrUrl = null;
+        $bankInfo = null;
+
+        if ($invoice && $bookingDeposit->payment_status === 'pending') {
+            $webhooksPermissionService = app(\App\Services\WebhooksPermissionService::class);
+            $canUseSepay = $webhooksPermissionService->canUseSepay($organizationId);
+            
+            if ($canUseSepay) {
+                $bankName = config('services.sepay.bank_name', 'TPBank');
+                $accountNumber = config('services.sepay.account_number', '46166378666');
+                $accountName = config('services.sepay.account_name', 'Le Xuan Thanh Quan');
+            } else {
+                $bankingAccount = \App\Models\OrganizationBanking::with('sepayBank')
+                    ->where('organization_id', $organizationId)
+                    ->where('is_active', true)
+                    ->where('is_default', true)
+                    ->first();
+                    
+                if (!$bankingAccount) {
+                    $bankingAccount = \App\Models\OrganizationBanking::with('sepayBank')
+                        ->where('organization_id', $organizationId)
+                        ->where('is_active', true)
+                        ->first();
+                }
+                
+                if ($bankingAccount) {
+                    $bankName = $bankingAccount->bank_name ?? $bankingAccount->sepayBank->sepay_name ?? $bankingAccount->sepayBank->short_name ?? null;
+                    $accountNumber = $bankingAccount->account_number;
+                    $accountName = $bankingAccount->account_name;
+                }
+            }
+            
+            if (isset($bankName) && isset($accountNumber)) {
+                $bankInfo = [
+                    'bank_name' => $bankName,
+                    'account_number' => $accountNumber,
+                    'account_name' => $accountName ?? '',
+                    'amount' => $invoice->total_amount,
+                    'content' => $bookingDeposit->reference_number, // Thay thế mã Hóa đơn bằng mã Đặt cọc
+                ];
+                
+                $params = [
+                    'acc' => $bankInfo['account_number'],
+                    'bank' => $bankInfo['bank_name'],
+                    'amount' => $bankInfo['amount'],
+                    'des' => $bankInfo['content']
+                ];
+                $qrUrl = 'https://qr.sepay.vn/img?' . http_build_query($params);
+            }
+        }
+
+        return view('staff.contract.booking-deposits.show', compact('bookingDeposit', 'hasInvoice', 'invoice', 'canTransitionTo', 'hasLease', 'lease', 'qrUrl', 'bankInfo')); // Trả về view với tất cả data → Hiển thị chi tiết
     }
 
     /**
@@ -2683,6 +2734,40 @@ class BookingDepositController extends Controller
                 'approved_by' => $user->id, // Lưu user ID duyệt
                 'payment_due_date' => $paymentDueDate, // Lưu hạn chót thanh toán
             ]);
+
+            // Tự động tạo Invoice
+            $prefillData = $this->calculateInvoiceDataForBookingDeposit($bookingDeposit);
+            
+            $invoiceNo = \App\Models\Invoice::generateInvoiceNumber($organizationId);
+            
+            $invoice = \App\Models\Invoice::create([
+                'organization_id' => $organizationId,
+                'is_auto_created' => true,
+                'booking_deposit_id' => $bookingDeposit->id,
+                'invoice_no' => $invoiceNo,
+                'invoice_type' => \App\Models\Invoice::TYPE_BOOKING_DEPOSIT,
+                'issue_date' => $prefillData['issue_date'],
+                'due_date' => $prefillData['due_date'],
+                'status' => 'issued', // Phát hành luôn để khách có thể quét mã thanh toán
+                'subtotal' => $prefillData['subtotal'],
+                'tax_amount' => $prefillData['tax_amount'],
+                'discount_amount' => $prefillData['discount_amount'],
+                'total_amount' => $prefillData['total_amount'],
+                'currency' => $prefillData['currency'],
+                'note' => $prefillData['note'],
+                'created_by' => $user->id,
+            ]);
+
+            // Add invoice items
+            foreach ($prefillData['items'] as $itemData) {
+                $invoice->items()->create([
+                    'item_type' => $itemData['item_type'],
+                    'description' => $itemData['description'],
+                    'quantity' => $itemData['quantity'],
+                    'unit_price' => $itemData['unit_price'],
+                    'amount' => $itemData['amount'],
+                ]);
+            }
 
             DB::commit(); // Commit transaction → Lưu tất cả thay đổi vào database
 

@@ -248,6 +248,27 @@ class SepayWebhookService
             }
         }
 
+        // Tìm Booking Deposit (BD{timestamp})
+        if (preg_match('/BD\d+/i', $cleanContent, $matches)) {
+            $bdNo = strtoupper($matches[0]);
+            
+            $bookingDeposit = \App\Models\BookingDeposit::where('reference_number', $bdNo)->first();
+            
+            if ($bookingDeposit) {
+                // Lấy invoice mới nhất liên quan đến booking deposit này
+                $invoice = Invoice::where('booking_deposit_id', $bookingDeposit->id)
+                    ->whereNull('deleted_at')
+                    ->where('status', '!=', 'cancelled')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                    
+                if ($invoice) {
+                    Log::info("SePay webhook: Found invoice {$invoice->invoice_no} via Booking Deposit {$bdNo} in content: {$content}");
+                    return ['type' => 'regular', 'invoice' => $invoice];
+                }
+            }
+        }
+
         // Fallback: Tìm bằng substring (loại bỏ dấu gạch khi so sánh)
         $invoices = Invoice::whereNull('deleted_at')
             ->where('status', '!=', 'cancelled')

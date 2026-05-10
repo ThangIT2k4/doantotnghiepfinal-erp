@@ -80,6 +80,34 @@ class AIChatService
     {
         $contents = [];
 
+        // Determine user context (tenant vs staff)
+        $user = auth()->user();
+        $isTenant = false;
+        if ($user) {
+            $tenantRoleId = \App\Models\Role::where('key_code', 'tenant')->value('id');
+            if ($tenantRoleId) {
+                $isTenant = $user->organizationUsers()->where('role_id', $tenantRoleId)->exists();
+            }
+        }
+        
+        $systemInstructionText = $isTenant 
+            ? "Bạn là trợ lý ảo AI thân thiện hỗ trợ khách thuê phòng. Nhiệm vụ của bạn là giải đáp thắc mắc về tiền nhà, hợp đồng và hỗ trợ khách tạo yêu cầu bảo trì (Ticket) khi phòng có sự cố. Luôn xưng hô lịch sự và chuyên nghiệp."
+            : "Bạn là trợ lý ảo AI cao cấp dành cho Quản lý tòa nhà/Nhân viên hệ thống ERP. Bạn có khả năng phân tích dữ liệu, truy xuất báo cáo doanh thu, đánh giá sức khỏe tòa nhà và tra cứu thông tin khách thuê. Hãy trả lời thông minh, súc tích và chuyên nghiệp.";
+
+        // Inject System Context to guide AI behavior
+        $contents[] = new Content([
+            'role' => 'user',
+            'parts' => [
+                new Part(['text' => "SYSTEM INSTRUCTION (Do not reply to this directly, just follow it): " . $systemInstructionText])
+            ],
+        ]);
+        $contents[] = new Content([
+            'role' => 'model',
+            'parts' => [
+                new Part(['text' => "Đã rõ. Tôi sẽ tuân thủ chỉ dẫn này."])
+            ],
+        ]);
+
         // Add previous messages
         foreach ($history as $msg) {
             $role = $msg['role'] === 'user' ? 'user' : 'model';
@@ -146,11 +174,19 @@ class AIChatService
             }
         }
 
-        return new Schema([
+        $schemaData = [
             'type' => Type::OBJECT,
-            'properties' => $properties,
-            'required' => $required,
-        ]);
+        ];
+
+        if (!empty($properties)) {
+            $schemaData['properties'] = $properties;
+        }
+        
+        if (!empty($required)) {
+            $schemaData['required'] = $required;
+        }
+
+        return new Schema($schemaData);
     }
 
     /**

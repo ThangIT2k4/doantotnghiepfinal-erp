@@ -61,14 +61,22 @@ class VertexAiChatToolsService
 
             $functionCalls = [];
             $textParts = [];
-            foreach ($parts as $part) {
+            foreach ($parts as &$part) {
                 if (!empty($part['text'])) {
                     $textParts[] = $part['text'];
                 }
                 if (!empty($part['functionCall'])) {
+                    // Cố định lỗi: json_decode(..., true) biến {} thành [].
+                    // Khi gửi lại API, functionCall.args phải là object (map), không được là list (array trống).
+                    if (isset($part['functionCall']['args']) && empty($part['functionCall']['args'])) {
+                        $part['functionCall']['args'] = (object)[];
+                    }
                     $functionCalls[] = $part['functionCall'];
                 }
             }
+            unset($part); // Xóa reference
+            
+            $content['parts'] = $parts; // Cập nhật lại parts đã được fix
 
             if ($functionCalls === []) {
                 return [

@@ -417,7 +417,7 @@ class SubscriptionController extends Controller
         ];
         
         // Tạo nội dung chuyển khoản
-        $content = "THANH TOAN HOA DON SUB {$invoice->invoice_number}";
+        $content = "SUB" . $invoice->id; // Sử dụng SUB + ID để đối soát tự động
         
         // Tạo QR code URL
         $qrParams = [
@@ -898,7 +898,29 @@ class SubscriptionController extends Controller
             }
         }
 
-        return view('staff.subscriptions.invoices.show', compact('invoice'));
+        $qrUrl = null;
+        $bankConfig = null;
+        $qrContent = null;
+
+        if ($invoice->status === 'pending') {
+            $bankConfig = [
+                'bank_name' => config('services.sepay.bank_name', 'TPBank'),
+                'account_number' => config('services.sepay.account_number', '46166378666'),
+                'account_name' => config('services.sepay.account_name', 'Le Xuan Thanh Quan'),
+            ];
+            
+            $qrContent = 'SUB' . $invoice->id;
+            
+            $qrParams = [
+                'acc' => $bankConfig['account_number'],
+                'bank' => $bankConfig['bank_name'],
+                'amount' => $invoice->amount,
+                'des' => $qrContent
+            ];
+            $qrUrl = 'https://qr.sepay.vn/img?' . http_build_query($qrParams);
+        }
+
+        return view('staff.subscriptions.invoices.show', compact('invoice', 'qrUrl', 'bankConfig', 'qrContent'));
     }
 
 }

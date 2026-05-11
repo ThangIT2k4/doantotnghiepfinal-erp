@@ -510,7 +510,7 @@ class TenantPaymentController extends Controller
             'account_number' => $bankingAccount->account_number,
             'account_name' => $bankingAccount->account_name,
             'amount' => $invoice->total_amount,
-            'content' => str_replace('-', '', $invoice->invoice_no), // Chỉ mã hóa đơn không có dấu gạch
+            'content' => 'HD' . $invoice->id, // Sử dụng HD + ID để đối soát tự động
             'payment_id' => $payment->id
         ];
 
@@ -652,7 +652,7 @@ class TenantPaymentController extends Controller
                 'account_number' => $accountNumber,
                 'account_name' => $accountName,
                 'amount' => $invoice->total_amount,
-                'content' => str_replace('-', '', $invoice->invoice_no), // Loại bỏ dấu gạch
+                'content' => 'HD' . $invoice->id, // Sử dụng HD + ID để đối soát tự động
                 'payment_id' => $payment->id
             ];
 
@@ -749,14 +749,12 @@ class TenantPaymentController extends Controller
                 $bankingAccount = $this->getBankingAccount($payment->invoice);
                 $bankName = $bankingAccount->bank_name;
                 $accountNumber = $bankingAccount->account_number;
-                $content = str_replace('-', '', $response['payment']['invoice']['invoice_no']); // Chỉ mã hóa đơn không có dấu gạch
-                
                 $bankInfo = [
                     'bank_name' => $bankName,
                     'account_number' => $accountNumber,
                     'account_name' => $bankingAccount->account_name ?? '',
                     'amount' => $payment->amount,
-                    'content' => $content
+                    'content' => 'HD' . $payment->invoice->id, // Sử dụng HD + ID để đối soát tự động
                 ];
                 
                 $qrUrl = $this->generateSepayQRUrl($bankInfo);

@@ -2246,7 +2246,7 @@ class BookingDepositController extends Controller
                     'account_number' => $accountNumber,
                     'account_name' => $accountName ?? '',
                     'amount' => $invoice->total_amount,
-                    'content' => $bookingDeposit->reference_number, // Thay thế mã Hóa đơn bằng mã Đặt cọc
+                    'content' => 'BD' . $bookingDeposit->id, // Sử dụng BD + ID làm nội dung chuyển khoản để đối soát tự động
                 ];
                 
                 $params = [

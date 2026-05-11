@@ -1,4 +1,4 @@
-﻿@extends('layouts.staff_dashboard')
+@extends('layouts.staff_dashboard')
 
 @section('title', 'Chi tiết Hóa đơn')
 
@@ -245,6 +245,49 @@
 
             <!-- Sidebar -->
             <div class="col-md-4">
+                @if(isset($qrUrl) && in_array($invoice->status, ['issued', 'overdue']))
+                {{-- Card Thanh toán QR SePay --}}
+                <div class="card shadow-sm mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-qrcode me-2"></i>Mã QR Thanh toán (SePay)
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="text-muted small mb-2">Quét mã QR để tự động xác nhận thanh toán</p>
+                        <div class="p-2 bg-light rounded d-inline-block mb-3 border">
+                            <img src="{{ $qrUrl }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                        </div>
+                        <div class="text-start p-2 bg-light rounded mb-3 small">
+                            <div><strong>Ngân hàng:</strong> {{ $bankConfig['bank_name'] }}</div>
+                            <div><strong>STK:</strong> {{ $bankConfig['account_number'] }}</div>
+                            <div><strong>Chủ TK:</strong> {{ $bankConfig['account_name'] }}</div>
+                            <div><strong>Số tiền:</strong> <span class="text-danger fw-bold">{{ number_format($invoice->total_amount, 0, ',', '.') }}đ</span></div>
+                            <div><strong>Nội dung:</strong> <span class="text-primary fw-bold">{{ $qrContent }}</span></div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="copyQrLink('{{ $qrUrl }}')">
+                                <i class="fas fa-copy me-1"></i> Copy Link QR
+                            </button>
+                            <a href="{{ $qrUrl }}" target="_blank" download class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-download me-1"></i> Mở hình QR
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function copyQrLink(url) {
+                        navigator.clipboard.writeText(url).then(function() {
+                            if(typeof Notify !== 'undefined') {
+                                Notify.success('Đã copy đường dẫn QR thành công!');
+                            } else {
+                                alert('Đã copy đường dẫn QR thành công!');
+                            }
+                        });
+                    }
+                </script>
+                @endif
+
                 <!-- Actions -->
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-white">

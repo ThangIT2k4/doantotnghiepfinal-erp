@@ -125,6 +125,42 @@
             </div>
 
             <div class="col-lg-4">
+                @if(isset($qrUrl) && $invoice->status === 'pending')
+                {{-- Card Thanh toán QR SePay --}}
+                <div class="card shadow-sm mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-qrcode me-2"></i>Mã QR Thanh toán
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <p class="text-muted small mb-2">Quét mã QR để thanh toán gói dịch vụ</p>
+                        <div class="p-2 bg-light rounded d-inline-block mb-3 border">
+                            <img src="{{ $qrUrl }}" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                        </div>
+                        <div class="text-start p-2 bg-light rounded mb-3 small">
+                            <div><strong>Ngân hàng:</strong> {{ $bankConfig['bank_name'] }}</div>
+                            <div><strong>STK:</strong> {{ $bankConfig['account_number'] }}</div>
+                            <div><strong>Chủ TK:</strong> {{ $bankConfig['account_name'] }}</div>
+                            <div><strong>Số tiền:</strong> <span class="text-danger fw-bold">{{ number_format($invoice->amount, 0, ',', '.') }}đ</span></div>
+                            <div><strong>Nội dung:</strong> <span class="text-primary fw-bold">{{ $qrContent }}</span></div>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" onclick="copyQrLink('{{ $qrUrl }}')">
+                                <i class="fas fa-copy me-1"></i> Copy Link QR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    function copyQrLink(url) {
+                        navigator.clipboard.writeText(url).then(function() {
+                            alert('Đã copy đường dẫn QR thành công!');
+                        });
+                    }
+                </script>
+                @endif
+
                 <div class="card shadow-sm sticky-top" style="top: 20px;">
                     <div class="card-header bg-light">
                         <h6 class="mb-0">

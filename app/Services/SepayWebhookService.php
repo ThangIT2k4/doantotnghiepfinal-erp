@@ -212,47 +212,68 @@ class SepayWebhookService
      */
     public function findInvoiceByContent($content)
     {
-        if (empty($content)) { // Nếu content rỗng
-            return null; // Trả về null → Không thể tìm hóa đơn
+        if (empty($content)) {
+            return null;
         }
 
-        // Loại bỏ dấu gạch trong content để so sánh (vì invoice number không có dấu gạch)
+        // Loại bỏ dấu gạch trong content để so sánh
         $cleanContent = str_replace('-', '', $content);
+        Log::info("SePay webhook: Searching invoice for content: {$content} (clean: {$cleanContent})");
 
-        // Tìm subscription invoice (SUB{YYYYMMDD}{random} hoặc SUB{YYYYMMDD}{subscription_id})
-        if (preg_match('/SUB\d{8}\w+/i', $cleanContent, $matches)) {
-            $invoiceNo = strtoupper($matches[0]);
+        // 1. Tìm Subscription Invoice (SUB{id} hoặc SUB{invoice_number})
+        if (preg_match('/SUB(\d+)/i', $cleanContent, $matches)) {
+            $idOrNo = $matches[1];
+            $fullMatch = strtoupper($matches[0]);
             
-            $subscriptionInvoice = \App\Models\SubscriptionInvoice::where('invoice_number', $invoiceNo)
-                ->where('status', '!=', 'paid') // Chỉ lấy invoice chưa thanh toán
-                ->first();
+            // Thử tìm theo ID trước (mới)
+            $subscriptionInvoice = \App\Models\SubscriptionInvoice::find($idOrNo);
             
-            if ($subscriptionInvoice) {
-                Log::info("SePay webhook: Found subscription invoice {$invoiceNo} in content: {$content}");
-                // Trả về subscription invoice dưới dạng array để xử lý riêng
+            // Nếu không tìm thấy theo ID, thử tìm theo invoice_number (cũ)
+            if (!$subscriptionInvoice) {
+                $subscriptionInvoice = \App\Models\SubscriptionInvoice::where('invoice_number', $fullMatch)->first();
+            }
+            
+            if ($subscriptionInvoice && $subscriptionInvoice->status !== 'paid') {
+                Log::info("SePay webhook: Found subscription invoice via ID/No: {$fullMatch}");
                 return ['type' => 'subscription', 'invoice' => $subscriptionInvoice];
             }
         }
 
-        // Tìm regular invoice (HD{org_id}{year}{month}{sequence} - format mới không có dấu gạch)
-        if (preg_match('/HD\d{6,}\d{4}/i', $cleanContent, $matches)) {
-            $invoiceNo = strtoupper($matches[0]);
+        // 2. Tìm Regular Invoice (HD{id} hoặc HD{invoice_no})
+        if (preg_match('/HD(\d+)/i', $cleanContent, $matches)) {
+            $idOrNo = $matches[1];
+            $fullMatch = strtoupper($matches[0]);
             
-            $invoice = Invoice::where('invoice_no', $invoiceNo)
+            // Thử tìm theo ID trước (mới)
+            $invoice = Invoice::where('id', $idOrNo)
                 ->whereNull('deleted_at')
                 ->first();
             
-            if ($invoice) {
-                Log::info("SePay webhook: Found invoice {$invoiceNo} in content: {$content}");
+            // Nếu không tìm thấy theo ID, thử tìm theo invoice_no (cũ)
+            if (!$invoice) {
+                $invoice = Invoice::where('invoice_no', $fullMatch)
+                    ->whereNull('deleted_at')
+                    ->first();
+            }
+            
+            if ($invoice && $invoice->status !== 'cancelled') {
+                Log::info("SePay webhook: Found invoice via ID/No: {$fullMatch}");
                 return ['type' => 'regular', 'invoice' => $invoice];
             }
         }
 
-        // Tìm Booking Deposit (BD{timestamp})
-        if (preg_match('/BD\d+/i', $cleanContent, $matches)) {
-            $bdNo = strtoupper($matches[0]);
+        // 3. Tìm Booking Deposit (BD{id} hoặc BD{reference_number})
+        if (preg_match('/BD(\d+)/i', $cleanContent, $matches)) {
+            $idOrNo = $matches[1];
+            $fullMatch = strtoupper($matches[0]);
             
-            $bookingDeposit = \App\Models\BookingDeposit::where('reference_number', $bdNo)->first();
+            // Thử tìm theo ID trước (mới)
+            $bookingDeposit = \App\Models\BookingDeposit::find($idOrNo);
+            
+            // Nếu không tìm thấy theo ID, thử tìm theo reference_number (cũ)
+            if (!$bookingDeposit) {
+                $bookingDeposit = \App\Models\BookingDeposit::where('reference_number', $fullMatch)->first();
+            }
             
             if ($bookingDeposit) {
                 // Lấy invoice mới nhất liên quan đến booking deposit này
@@ -263,7 +284,7 @@ class SepayWebhookService
                     ->first();
                     
                 if ($invoice) {
-                    Log::info("SePay webhook: Found invoice {$invoice->invoice_no} via Booking Deposit {$bdNo} in content: {$content}");
+                    Log::info("SePay webhook: Found invoice {$invoice->invoice_no} via Booking Deposit ID/No: {$fullMatch}");
                     return ['type' => 'regular', 'invoice' => $invoice];
                 }
             }
@@ -277,22 +298,12 @@ class SepayWebhookService
         foreach ($invoices as $invoice) {
             $cleanInvoiceNo = str_replace('-', '', $invoice->invoice_no);
             if (stripos($cleanContent, $cleanInvoiceNo) !== false) {
-                Log::info("SePay webhook: Found invoice {$invoice->invoice_no} by substring match in content: {$content}");
+                Log::info("SePay webhook: Found invoice {$invoice->invoice_no} by substring match");
                 return ['type' => 'regular', 'invoice' => $invoice];
             }
         }
 
-        // Tìm subscription invoice bằng substring
-        $subscriptionInvoices = \App\Models\SubscriptionInvoice::where('status', '!=', 'paid')->get();
-        foreach ($subscriptionInvoices as $subInvoice) {
-            $cleanInvoiceNo = str_replace('-', '', $subInvoice->invoice_number);
-            if (stripos($cleanContent, $cleanInvoiceNo) !== false) {
-                Log::info("SePay webhook: Found subscription invoice {$subInvoice->invoice_number} by substring match in content: {$content}");
-                return ['type' => 'subscription', 'invoice' => $subInvoice];
-            }
-        }
-
-        Log::warning("SePay webhook: No invoice found in content: {$content}");
+        Log::warning("SePay webhook: No invoice found for content: {$content}");
         return null;
     }
 

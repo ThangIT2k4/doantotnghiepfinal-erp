@@ -835,7 +835,37 @@ class InvoiceController extends Controller
             }
         }
 
-        return view('staff.billing.invoices.show', compact('invoice'));
+        // Prepare SePay QR data
+        $canUseSepay = false;
+        $qrUrl = null;
+        $qrContent = null;
+        $bankConfig = null;
+
+        if ($invoice->organization_id) {
+            $webhooksPermissionService = app(\App\Services\WebhooksPermissionService::class);
+            $canUseSepay = $webhooksPermissionService->canUseSepay($invoice->organization_id);
+            
+            if ($canUseSepay && in_array($invoice->status, ['issued', 'overdue'])) {
+                // Dùng ngân hàng SaaS từ config (đã đăng ký webhook)
+                $bankConfig = [
+                    'bank_name' => config('services.sepay.bank_name', 'TPBank'),
+                    'account_number' => config('services.sepay.account_number', '46166378666'),
+                    'account_name' => config('services.sepay.account_name', 'Le Xuan Thanh Quan'),
+                ];
+                
+                $qrContent = 'HD' . $invoice->id;
+                
+                $qrParams = [
+                    'acc' => $bankConfig['account_number'],
+                    'bank' => $bankConfig['bank_name'],
+                    'amount' => $invoice->total_amount,
+                    'des' => $qrContent
+                ];
+                $qrUrl = 'https://qr.sepay.vn/img?' . http_build_query($qrParams);
+            }
+        }
+
+        return view('staff.billing.invoices.show', compact('invoice', 'canUseSepay', 'qrUrl', 'qrContent', 'bankConfig'));
     }
 
     /**

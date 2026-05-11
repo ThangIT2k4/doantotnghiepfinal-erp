@@ -539,7 +539,7 @@ class GuestPaymentController extends Controller
                 'account_number' => $bankingAccount->account_number ?? config('services.sepay.account_number', '46166378666'),
                 'account_name' => $bankingAccount->account_name ?? config('services.sepay.account_name', 'Le Xuan Thanh Quan'),
                 'amount' => $invoice->total_amount,
-                'content' => str_replace('-', '', $invoice->invoice_no), // Chỉ mã hóa đơn không có dấu gạch
+                'content' => 'HD' . $invoice->id, // Sử dụng HD + ID để đối soát tự động
                 'payment_id' => $payment->id
             ];
 
@@ -731,7 +731,7 @@ class GuestPaymentController extends Controller
                 'account_number' => $accountNumber,
                 'account_name' => $accountName,
                 'amount' => $invoice->total_amount,
-                'content' => str_replace('-', '', $invoice->invoice_no), // Loại bỏ dấu gạch
+                'content' => 'HD' . $invoice->id, // Sử dụng HD + ID để đối soát tự động
                 'payment_id' => $payment->id
             ];
 
